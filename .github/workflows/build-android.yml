@@ -18,14 +18,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Configurar Android SDK del sistema
-        uses: android-actions/setup-android@v3
-
-      - name: Instalar build-tools y aceptar licencias
-        run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-
       - name: Configurar Python
         uses: actions/setup-python@v5
         with:
@@ -41,14 +33,21 @@ jobs:
           pip3 install --upgrade buildozer cython virtualenv
 
       - name: Construir el APK con Buildozer
-        env:
-          ANDROIDSDK: /usr/local/lib/android/sdk
-          ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
-          echo y | buildozer android debug
+          # Primera pasada: prepara el SDK de Android (puede fallar, es normal)
+          buildozer android debug || true
+
+          # Instalar las build-tools en el SDK que Buildozer acaba de crear
+          SDK_MANAGER="$HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager"
+          if [ -f "$SDK_MANAGER" ]; then
+            yes | "$SDK_MANAGER" "build-tools;29.0.0" "platforms;android-33"
+          fi
+
+          # Segunda pasada: compilación real, aceptando licencias automáticamente
+          echo y | buildozer -v android debug
         timeout-minutes: 60
 
-      - name: Subir el APK como artefacto descargable
+      - name: Subir el APK como artefacto
         uses: actions/upload-artifact@v4
         with:
           name: PTT-Client-Android-APK
