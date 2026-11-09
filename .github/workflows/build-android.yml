@@ -9,15 +9,32 @@ jobs:
   build-android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
         with:
-          workdir: .
-          buildozer_version: stable
-      - name: Upload APK
+          python-version: '3.11'
+
+      - name: Instalar dependencias del sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+
+      - name: Instalar Buildozer y Cython
+        run: |
+          pip3 install --upgrade buildozer cython virtualenv
+
+      - name: Construir el APK con Buildozer
+        run: |
+          buildozer android debug
+        # Aumentamos el tiempo de espera por si la primera compilación es lenta
+        timeout-minutes: 30
+
+      - name: Subir el APK como artefacto descargable
         uses: actions/upload-artifact@v4
         with:
           name: PTT-Client-Android-APK
-          path: ${{ steps.buildozer.outputs.filename }}
+          path: bin/*.apk
+          if-no-files-found: error
