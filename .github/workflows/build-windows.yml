@@ -1,0 +1,22 @@
+name: Construir EXE de Windows (PTT Server)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pyinstaller
+      - run: pyinstaller --noconfirm --onefile --windowed --name PTT-Server-Windows windows_server.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PTT-Server-Windows
+          path: dist/PTT-Server-Windows.exe
