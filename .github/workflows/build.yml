@@ -1,0 +1,32 @@
+name: Construir EXE de Windows
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar PyInstaller
+        run: pip install pyinstaller
+
+      - name: Construir el EXE
+        run: pyinstaller --noconfirm --onefile --windowed --name mi-primera-app app.py
+
+      - name: Subir el EXE como artefacto descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: mi-primera-app-windows
+          path: dist/mi-primera-app.exe
+          if-no-files-found: error
